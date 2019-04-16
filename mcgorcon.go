@@ -5,8 +5,8 @@ package mcgorcon
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"time"
@@ -66,6 +66,11 @@ func (c *Client) SendCommand(command string) (string, error) {
 		return "", errors.New("Bad auth, could not send command.")
 	}
 	return string(payload), nil
+}
+
+// Close closes the rcon connection, allowing the server to exit
+func (c *Client) Close() error {
+	return c.connection.Close()
 }
 
 // authenticate authenticates the user with the server.
