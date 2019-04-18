@@ -32,29 +32,30 @@ const packetTypeAuth packetType = 3
 const requestIDBadLogin int32 = -1
 
 // Dial up the server and establish a RCON conneciton.
-func Dial(host string, port int, pass string) (Client, error) {
+func Dial(host string, port int, pass string) (*Client, error) {
 	// Combine the host and port to form the address.
 	address := host + ":" + fmt.Sprint(port)
+
 	// Actually establish the conneciton.
 	conn, err := net.DialTimeout("tcp", address, 10*time.Second)
+
 	if err != nil {
-		return Client{}, err
+		return nil, err
 	}
+
 	// Create the client object, since the connection has been established.
-	c := Client{password: pass, connection: conn}
-	// TODO - server validation to make sure we're talking to a real RCON server.
-	// For now, just return the client and assume it's a real server.
+	c := &Client{password: pass, connection: conn}
+
+	if err = c.authenticate(); err != nil {
+		defer c.Close()
+		return nil, err
+	}
+
 	return c, nil
 }
 
 // SendCommand sends a command to the server and returns the result (often nothing).
 func (c *Client) SendCommand(command string) (string, error) {
-	// Because I'm lazy, just authenticate with every command.
-	err := c.authenticate()
-	if err != nil {
-		return "", err
-	}
-
 	// Send the packet.
 	head, payload, err := c.sendPacket(packetTypeCommand, []byte(command))
 	if err != nil {
